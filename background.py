@@ -2,7 +2,7 @@ import pygame
 from helperFunctions import *
 
 class Background():
-	""" Representation of the background """
+	""" Representation of the background. Should ONLY be moved by level-class! """
 
 	def __init__(self, parent):
 		self.parent = parent
@@ -24,8 +24,6 @@ class Background():
 			self.pavementOffset.inc()
 			if self.xPosBackground < 0:
 				self.xPosBackground += 2
-#		print(-(self.wallpaperDim[0] - self.parent.width))
-
 
 
 	def draw(self):

@@ -84,13 +84,13 @@ class Player():
 	def move(self, speed):
 		if not self.jumping:
 			self.kneeling = False
-			self.vector = speed > 0
 			self.movement.verticalMove(speed > 0)
 			self.changeFrame()
-			if speed > 0 and self.xPos < self.xPosMax:
+			if speed != 0:
 				self.xPos += speed
-			elif speed < 0 and self.xPos > self.xPosMin:
-				self.xPos += speed
+				self.vector = True if speed > 0 else False
+
+
 
 
 	def stop(self):

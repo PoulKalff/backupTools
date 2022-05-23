@@ -28,7 +28,6 @@ version = '0.20'		# player animation complete
 sounds = {}
 #backgroundMusic = pygame.mixer.Sound("snd/Mozart.-.Symphony.No.40.1st.Movement.mp3")
 #backgroundMusic.set_volume(0.03)
-background = pygame.image.load('gfx/background.png')
 font30 = pygame.font.Font('freesansbold.ttf', 30)
 font60 = pygame.font.Font('freesansbold.ttf', 60)
 
@@ -62,15 +61,6 @@ class Main():
 		self.level.xPosition = self.player.xPos
 
 
-	def drawBackground(self):
-		self.level.background.draw()
-
-
-	def drawPlayer(self):
-		self.player.update()
-		self.player.draw()
-
-
 	def checkInput(self):
 		""" Checks and responds to input from keyboard and mouse """
 		for event in pygame.event.get():
@@ -99,27 +89,43 @@ class Main():
 			self.player.movement.goDown()
 			if not self.player.jumping: self.player.kneel()
 		elif keysPressed[pygame.K_LEFT]:
-			if self.level.xPosition > 0:
+			# move player
+			if self.player.xPos > self.player.xPosMin:
 				self.player.move(-10)
-				self.level.xPosition -= 10
-
-
-				if self.player.xPos <= self.player.xPosMin:
-					self.level.background.move(self.player.vector)
-
-
-
-
-		elif keysPressed[pygame.K_RIGHT]:
-			if self.level.xPosition < self.level.length:
-				self.player.move(10)
-				self.level.xPosition += 10
-				if self.player.xPos >= self.player.xPosMax:
-					self.level.background.move(self.player.vector)
-			else:
+			elif self.level.xPos == 0 and self.player.xPos > 0:
+				self.player.move(-10)
+			elif self.level.xPos == 0 and self.player.xPos == 0:
 				self.player.stop()
+			else:
+				self.player.move(0)
+
+
+
+
+			# move level
+			if self.level.xPos > 0 and self.player.xPos == self.player.xPosMin:
+				self.level.move(-10)
+		elif keysPressed[pygame.K_RIGHT]:
+			# move player
+			if self.player.xPos < self.player.xPosMax:
+				self.player.move(10)
+			elif self.level.xPos == self.level.xPosMax and self.player.xPos < self.width:
+				self.player.move(10)
+			elif self.level.xPos == self.level.xPosMax and self.player.xPos == self.player.xPosMax:
+				self.player.stop()
+			else:
+				self.player.move(0)
+			# move level
+			if self.level.xPos < self.level.xPosMax and self.player.xPos == self.player.xPosMax:
+				self.level.move(10)
+			# check complete
+			if self.player.xPos >= self.width:
+				self.level.triggerEnd()
 		elif self.player.movement.isMoving() and not self.player.jumping:
 			self.player.stop()
+
+
+
 
 
 
@@ -128,15 +134,12 @@ class Main():
 	def loop(self):
 		""" Ensure that view runs until terminated by user """
 		while self.running:
-			self.drawBackground()
-			self.drawPlayer()
+			self.level.background.draw()
+			self.player.update()
+			self.player.draw()
 			self.checkInput()
 			pygame.display.update()
-
-
-			print(self.level.xPosition, self.level.length)
-
-
+			print(self.player.xPos, self.level.xPos, self.player.vector)
 		pygame.quit()
 		print('  Game terminated gracefully\n')
 
@@ -156,7 +159,7 @@ obj.run()
 
 
 # --- TODO ---------------------------------------------------------------------------------------
-# - 
+# - JUMP giver ukkurante vaerdier!
 
 
 # --- NOTES --------------------------------------------------------------------------------------
