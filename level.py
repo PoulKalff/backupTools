@@ -1,17 +1,26 @@
-#import pygame
-#from helperFunctions import *
+import json
+from objects import Object
 
 from background import Background
 
 class Level():
 	""" Representation of the background """
 
-	def __init__(self, parent, levelNo):
+	def __init__(self, parent, levelNo, startPos = 0):
 		self.parent = parent
-		self.number = levelNo		# should get level No and read data from file
-		self.xPosMax = 8320			# The width of the level, in pixel (8320 = 1280 * 6.5)
-		self.xPos = 0				# Where in the level is player	
-		self.background = Background(self.parent)
+		# read data
+		with open('levelData.json') as json_file:
+			self.levelData = json.load(json_file)['levels'][str(levelNo)]
+		self.xPosMax = self.levelData['length']		# The width of the level, in pixel
+		self.xPos = int(startPos * self.xPosMax) if startPos else 0
+
+
+
+
+										# Where in the level is player	
+		self.background = Background(self.parent, self.levelData, self.xPos)
+		self.objects = [Object()]	# List of objects bound to the level (portal, toadstool, etc..)
+
 
 
 	def move(self, speed):
@@ -24,11 +33,19 @@ class Level():
 
 
 
+	def update(self):
+		self.background.draw()
+		for obj in self.objects:
+			if self.xPos < obj.xPos < self.xPos + self.parent.width + 100: #obj.animFrames[0].width:
+				self.parent.display.blit(obj.animFrames[0], (self.parent.width - (self.xPos + self.parent.width - obj.xPos), obj.yPos))
+
+
+
 
 	def triggerEnd(self):
-		""" Triggered when player reaches end of level (xPos == self.length) """
+		""" Triggered when player reaches end of level (level.xPos == self.length) """
 		import sys
-		sys.exit('Level ' + str(self.number) + ' Completed!')
+		sys.exit('Level ' + str(self.levelData['levelNo']) + ' Completed!')
 
 
 

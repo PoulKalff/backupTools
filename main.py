@@ -57,8 +57,16 @@ class Main():
 	def initGame(self):
 		self.running = True
 		self.player = Player(self)
-		self.level = Level(self, 1)
+		self.level = Level(self, 1, 0.9)
 		self.level.xPosition = self.player.xPos
+
+
+	def showProgressBar(self):
+		percentage = (self.level.xPos + self.player.xPos) / (self.width + self.level.xPosMax)
+		barWidth = self.width - 200
+		pygame.draw.rect(self.display, (70, 180, 50), (100, 30, barWidth, 20))	# bar
+		pygame.draw.rect(self.display, (0, 0, 0),     (100 + (barWidth * percentage), 30, 2, 20))	# player location
+
 
 
 	def checkInput(self):
@@ -74,7 +82,7 @@ class Main():
 				elif event.key == pygame.K_SPACE:
 					pass
 			elif event.type == self.jumpEvent:					# special events
-				self.player.calculateJump()
+				self.player.calculateJump(self.level)
 			elif event.type == self.tickEvent:
 				self.ticks += 1
 				if 	self.ticks > 60: self.ticks = 0
@@ -84,7 +92,7 @@ class Main():
 				self.player.movement.goUp()
 				self.player.jumping = True
 				self.player.kneeling = False
-				pygame.time.set_timer(self.jumpEvent, 100)			# register a jump-event
+				pygame.time.set_timer(self.jumpEvent, 32)			# register a jump-event
 		elif keysPressed[pygame.K_DOWN]:
 			self.player.movement.goDown()
 			if not self.player.jumping: self.player.kneel()
@@ -98,13 +106,10 @@ class Main():
 				self.player.stop()
 			else:
 				self.player.move(0)
-
-
-
-
 			# move level
 			if self.level.xPos > 0 and self.player.xPos == self.player.xPosMin:
-				self.level.move(-10)
+				if not self.player.jumping:
+					self.level.move(-10)
 		elif keysPressed[pygame.K_RIGHT]:
 			# move player
 			if self.player.xPos < self.player.xPosMax:
@@ -117,7 +122,8 @@ class Main():
 				self.player.move(0)
 			# move level
 			if self.level.xPos < self.level.xPosMax and self.player.xPos == self.player.xPosMax:
-				self.level.move(10)
+				if not self.player.jumping:
+					self.level.move(10)
 			# check complete
 			if self.player.xPos >= self.width:
 				self.level.triggerEnd()
@@ -126,20 +132,16 @@ class Main():
 
 
 
-
-
-
-
-
 	def loop(self):
 		""" Ensure that view runs until terminated by user """
 		while self.running:
-			self.level.background.draw()
+			self.level.update()
 			self.player.update()
 			self.player.draw()
+			self.showProgressBar()
 			self.checkInput()
 			pygame.display.update()
-			print(self.player.xPos, self.level.xPos, self.player.vector)
+			print(self.level.xPos)
 		pygame.quit()
 		print('  Game terminated gracefully\n')
 
@@ -159,7 +161,7 @@ obj.run()
 
 
 # --- TODO ---------------------------------------------------------------------------------------
-# - JUMP giver ukkurante vaerdier!
+# - 
 
 
 # --- NOTES --------------------------------------------------------------------------------------

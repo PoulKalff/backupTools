@@ -25,7 +25,8 @@ class Player():
 		self.size = self.runFrames[1].get_rect().size
 		self.yAcc = 30
 		self.xPos = 300
-		self.yPos = x - self.runFrames[1].get_height() - 30
+		self.yPosOrig = x - self.runFrames[1].get_height() - 40
+		self.yPos = self.yPosOrig
 		self.xPosMin = 250
 		self.xPosMax = 850
 
@@ -61,19 +62,30 @@ class Player():
 
 
 
-	def calculateJump(self):
-		if self.vector and self.xPos < self.xPosMax:
-			self.xPos += 7
-		elif not self.vector and self.xPos > self.xPosMin:
-			self.xPos -= 10
+	def calculateJump(self, level):
+		if self.vector:
+			if self.xPos != self.xPosMax:
+				self.xPos += 10
+			elif level.xPos == level.xPosMax and self.xPos < level.xPosMax:
+				self.xPos += 10
+		else:
+			if self.xPos != self.xPosMin and self.xPos > 0:
+				self.xPos -= 10
+			elif level.xPos == 0 and self.xPos > 0:
+				self.xPos -= 10
+		# move level
+		if level.xPos > 0 and self.xPos <= self.xPosMin:
+			level.move(-10)
+		elif level.xPos < level.xPosMax and self.xPos >= self.xPosMax:
+			level.move(10)
 		self.yPos -= self.yAcc
 		self.yAcc -= 2
 		if self.yAcc > 0:
 			self.currentBody = self.jumpFrames[0] if self.vector else pygame.transform.flip(self.jumpFrames[0] , True, False)
 		else:
 			self.currentBody = self.jumpFrames[1]  if self.vector else pygame.transform.flip(self.jumpFrames[1], True, False)
-		if self.yPos >= 448:
-			self.yPos = 448
+		if self.yPos >= self.yPosOrig:
+			self.yPos = self.yPosOrig
 			self.yAcc = 30
 			self.jumping = False
 			pygame.time.set_timer(self.parent.jumpEvent, 0)			# un-register the jump-event

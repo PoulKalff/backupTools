@@ -1,0 +1,31 @@
+{
+	"levels":{
+		"1":{
+			"name" : "KajDrewsvej",
+			"levelNo" : 1,
+			"length" : 18500,
+			"objects" : [],
+			"bgPath" : "gfx/level1backdrop.png",
+			"layerPath" : "gfx/level1layer.png",
+			"TilePath" : "gfx/pavement.png"
+		},
+		"2":{
+			"name":"level2navn",
+			"levelNo":2,
+			"length":0,
+			"objects":[],
+			"bgPath":"gfx/",
+			"layerPath":"gfx/",
+			"TilePath":"gfx/"
+		},
+		"3":{
+			"name":"level3navn",
+			"levelNo":2,
+			"length":0,
+			"objects":[],
+			"bgPath":"gfx/",
+			"layerPath":"gfx/",
+			"TilePath":"gfx/"
+		}
+	}
+}
