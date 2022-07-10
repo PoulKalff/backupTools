@@ -6,7 +6,7 @@ class Background():
 
 	def __init__(self, parent, levelData, xPos):
 		self.parent = parent
-		self.tile = pygame.image.load(levelData['TilePath'])
+		self.tile = pygame.image.load(levelData['tilePath'])
 		self.layer = pygame.image.load(levelData['layerPath'])
 		self.background = pygame.image.load(levelData['bgPath'])
 		self.layerDim = self.layer.get_size()
@@ -20,11 +20,11 @@ class Background():
 		if direction:
 			self.pavementOffset.dec()
 			if self.xPosBackground > -(self.layerDim[0] - self.parent.width):
-				self.xPosBackground -= 2
+				self.xPosBackground -= 4
 		else:
 			self.pavementOffset.inc()
 			if self.xPosBackground < 0:
-				self.xPosBackground += 2
+				self.xPosBackground += 4
 
 
 	def draw(self):

@@ -31,6 +31,7 @@ sounds = {}
 font30 = pygame.font.Font('freesansbold.ttf', 30)
 font60 = pygame.font.Font('freesansbold.ttf', 60)
 
+
 # --- Classes -------------------------------------------------------------------------------------
 
 class Main():
@@ -40,6 +41,8 @@ class Main():
 		self.ticks = 0 
 		self.width = 1280
 		self.height = 720
+		self.time_down = 0.0
+		self.time_elapsed = 0.0
 		pygame.init()
 		self.gameTimer = pygame.time.Clock
 		self.tickEvent = pygame.USEREVENT + 0
@@ -57,7 +60,7 @@ class Main():
 	def initGame(self):
 		self.running = True
 		self.player = Player(self)
-		self.level = Level(self, 1, 0.9)
+		self.level = Level(self, 1)
 		self.level.xPosition = self.player.xPos
 
 
@@ -74,28 +77,33 @@ class Main():
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				self.running = False
+			# --- Key Down Events ---------------------------------------------
+			elif event.type == pygame.KEYDOWN:
+				if event.key == pygame.K_UP:
+					if self.player.yPos == self.player.yPosLevel:
+						self.player.goingUp = True
+				elif event.key == pygame.K_DOWN:
+					self.player.kneeling = True
+			# --- Key Up Events -----------------------------------------------
 			elif event.type == pygame.KEYUP:
 				if event.key == pygame.K_ESCAPE:
 					self.running = False
+				elif event.key == pygame.K_UP:
+					self.player.goingUp = False
+				elif event.key == pygame.K_DOWN:
+					self.player.kneeling = False
 				elif event.key == pygame.K_q:
 					self.running = False
 				elif event.key == pygame.K_SPACE:
 					pass
-			elif event.type == self.jumpEvent:					# special events
-				self.player.calculateJump(self.level)
 			elif event.type == self.tickEvent:
 				self.ticks += 1
-				if 	self.ticks > 60: self.ticks = 0
+				if self.ticks > 60: self.ticks = 0
 		keysPressed = pygame.key.get_pressed()
-		if keysPressed[pygame.K_UP]:
-			if not self.player.kneeling:
-				self.player.movement.goUp()
-				self.player.jumping = True
-				self.player.kneeling = False
-				pygame.time.set_timer(self.jumpEvent, 32)			# register a jump-event
-		elif keysPressed[pygame.K_DOWN]:
-			self.player.movement.goDown()
-			if not self.player.jumping: self.player.kneel()
+		# --- FOR DEV ------------------------------------------------------
+		if keysPressed[pygame.K_d]:
+			self.player.death = 1
+		# --- FOR DEV ------------------------------------------------------
 		elif keysPressed[pygame.K_LEFT]:
 			# move player
 			if self.player.xPos > self.player.xPosMin:
@@ -108,8 +116,7 @@ class Main():
 				self.player.move(0)
 			# move level
 			if self.level.xPos > 0 and self.player.xPos == self.player.xPosMin:
-				if not self.player.jumping:
-					self.level.move(-10)
+				self.level.move(-10)
 		elif keysPressed[pygame.K_RIGHT]:
 			# move player
 			if self.player.xPos < self.player.xPosMax:
@@ -122,26 +129,52 @@ class Main():
 				self.player.move(0)
 			# move level
 			if self.level.xPos < self.level.xPosMax and self.player.xPos == self.player.xPosMax:
-				if not self.player.jumping:
-					self.level.move(10)
+				self.level.move(10)
 			# check complete
 			if self.player.xPos >= self.width:
 				self.level.triggerEnd()
-		elif self.player.movement.isMoving() and not self.player.jumping:
+		elif self.player.movement.isMoving() and not self.player.goingUp and self.player.yPos == self.player.yPosLevel:
 			self.player.stop()
+
+
+
+	def checkCollision(self):
+		""" check if player's gfx overlaps any enemy's gfx """
+		bX, bY = self.player.currentBody.get_rect().size
+		hX, hY = self.player.currentHead.get_rect().size
+		xPosHead, yPosHead = self.player.getHeadCoord()
+		bodyRect = pygame.Rect(self.player.xPos, self.player.yPos, bX, bY) 
+		headRect = pygame.Rect(xPosHead, yPosHead, hX, hY) 
+		# --- FOR DEV ----------------------------------------------------------
+		pygame.draw.rect(self.display, (0,255,0), bodyRect, 1)			# draw GREEN body collision rect
+		pygame.draw.rect(self.display, (255,0,0), headRect, 1)		# draw RED head collision rect
+		# --- FOR DEV ----------------------------------------------------------
+		for obj in self.level.visibleObjects:
+			objSize = obj.animFrames[obj.count.get()].get_rect().size
+			objRect = pygame.Rect(self.width - (self.level.xPos + self.width - obj.xPos), obj.yPos, *objSize)
+			# --- FOR DEV ----------------------------------------------------------
+			pygame.draw.rect(self.display, (0,0,255), objRect, 1)			# draw BLUE body collision rect
+			# print(bodyRect, objRect, pygame.Rect.colliderect(bodyRect, objRect))
+			# --- FOR DEV ----------------------------------------------------------
+			if pygame.Rect.colliderect(bodyRect, objRect) or pygame.Rect.colliderect(headRect, objRect):
+				self.player.death = 1
+		return 1
+
 
 
 
 	def loop(self):
 		""" Ensure that view runs until terminated by user """
 		while self.running:
+			self.checkInput()
 			self.level.update()
 			self.player.update()
 			self.player.draw()
 			self.showProgressBar()
-			self.checkInput()
+			if not self.player.death:
+				self.checkCollision()
 			pygame.display.update()
-			print(self.level.xPos)
+	#		self.player.movement.show()
 		pygame.quit()
 		print('  Game terminated gracefully\n')
 
@@ -161,7 +194,11 @@ obj.run()
 
 
 # --- TODO ---------------------------------------------------------------------------------------
-# - 
+# - enemies move more advanced, eg jump, move back/forth, change speed
+# - vaaben/skud?
+# - use build-in ticks i stedet for self.ticks
+# - noget mindre hidsig collision detection... mindre rect inden i playe rect?
+
 
 
 # --- NOTES --------------------------------------------------------------------------------------

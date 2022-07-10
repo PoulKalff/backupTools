@@ -95,12 +95,13 @@ class PlayerMovement():
 		self.down = False
 
 	def verticalMove(self, direction):
+		self.down = False
 		if direction:
-			self.left = True
-			self.right = False
-		else:
 			self.left = False
 			self.right = True
+		else:
+			self.left = True
+			self.right = False
 
 	def goUp(self):
 		self.up = True

@@ -1,4 +1,6 @@
+import time
 import pygame
+import random
 from helperFunctions import *
 
 
@@ -10,14 +12,17 @@ class Player():
 		self.vector = 1				# last direction, left or right
 		self.movement = PlayerMovement()
 		self.stationary = 0
-		self.jumping = False
+		self.goingUp = False
 		self.kneeling = False
+		self.death = 0
 		self.standFrame = pygame.image.load('gfx/animRun/standing.png')
 		self.kneelFrame = pygame.image.load('gfx/animRun/kneeling.png')
 		self.kneelHeadFrame = pygame.image.load('gfx/animHead/kneeling.png')
 		self.jumpFrames = {0: pygame.image.load('gfx/animRun/jumpUp.png'), 1 : pygame.image.load('gfx/animRun/jumpDown.png')}
 		self.runFrames = {nr : pygame.image.load('gfx/animRun/' + str(nr + 1) + '.png') for nr in range(20)}
 		self.headFrames = {nr : pygame.image.load('gfx/animHead/' + str(nr + 1) + '.png') for nr in range(8)}
+		self.headDeath  = {0 : pygame.image.load('gfx/animHead/death1.png'), 1 : pygame.image.load('gfx/animHead/death2.png'), 2 : pygame.image.load('gfx/animHead/death1.png')}
+		self.deathScreen = pygame.image.load('gfx/deathScreen.png')
 		self.frameNo = RangeIterator(19)
 		self.currentBody = self.runFrames[self.frameNo.get()]
 		self.currentHead = self.headFrames[0]
@@ -25,10 +30,43 @@ class Player():
 		self.size = self.runFrames[1].get_rect().size
 		self.yAcc = 30
 		self.xPos = 300
-		self.yPosOrig = x - self.runFrames[1].get_height() - 40
-		self.yPos = self.yPosOrig
-		self.xPosMin = 250
-		self.xPosMax = 850
+		self.yPosLevel = x - self.runFrames[1].get_height() - 40
+		self.yPos = self.yPosLevel
+		self.xPosMin = 350
+		self.xPosMax = 650
+
+
+	def onGround(self):
+		return self.yPos == self.yPosLevel
+
+
+	def showDeath(self, xPos, yPos):
+		""" paint 10 heads flying in different directions, from starting point """
+		yPos -= 20
+		posMatrix = [
+						[[0, 10], [2, -24], [-34, -39], [-59, -26], [8, 5], [10, 38], [12, 91], [16, 176], [20, 312], [25, 529], [30, 846]] ,
+						[[0, -24], [10, -39], [20, -26], [30, 5], [45, 38], [60, 91], [85, 176], [110, 312], [150, 529], [200, 846], [250, 1000]] ,
+						[[0, -39], [50, -26], [100, 5], [150, 38], [175, 91], [200, 176], [225, 312], [250, 529], [275, 846], [265, 1000], [270, 1000]] ,
+						[[0, -26], [25, 5], [50, 38], [75, 91], [87, 176], [100, 312], [112, 529], [125, 846], [137, 1000], [132, 1000], [122, 1000]] ,
+						[[0, 5], [25, 38], [50, 91], [75, 176], [87, 312], [100, 529], [112, 846], [125, 1000], [137, 1000], [132, 1000], [122, 1000]] ,
+						[[0, 38], [32, 91], [65, 176], [97, 312], [113, 529], [130, 846], [145, 1000], [162, 1000], [178, 1000], [171, 1000], [158, 1000]] 
+					]
+		if self.parent.ticks % 6:
+			time.sleep(0.05)
+		if self.death == 11:
+			""" Show screen while delaying """
+			time.sleep(1)
+			self.parent.display.blit(self.deathScreen , (0, 0))
+			pygame.display.update()
+			time.sleep(3)
+			self.parent.initGame()
+		for head in range(6):
+		#	head = 0
+			self.parent.display.blit(self.headDeath[random.randint(0,2)], (xPos + posMatrix[head][self.death - 1][0], yPos + posMatrix[head][self.death - 1][1]) )
+			self.parent.display.blit(self.headDeath[random.randint(0,2)], (xPos - posMatrix[head][self.death - 1][0], yPos + posMatrix[head][self.death - 1][1]) )
+		self.death += 1
+		return 1
+
 
 
 	def update(self):
@@ -36,13 +74,24 @@ class Player():
 			frame = self.parent.ticks % 4 if self.movement.isMoving() else self.parent.ticks % 8
 		else:
 			frame = self.parent.ticks % 4
+		self.calculateJump()
+		self.changeBody()
 		self.changeHead(frame)
+		if not self.movement.isMoving():
+			self.stop()
 
 
 
-	def changeFrame(self):
-		self.frameNo.inc()
-		self.currentBody = self.runFrames[self.frameNo.get()]
+	def changeBody(self):
+		if self.onGround():
+			if self.movement.left or self.movement.right:
+				self.currentBody = self.runFrames[self.frameNo.get()]
+			else:
+				self.currentBody = self.kneelFrame if self.kneeling else self.standFrame
+		elif self.goingUp:
+			self.currentBody = self.jumpFrames[0] 		# going up
+		else:
+			self.currentBody = self.jumpFrames[1]		# going down
 		if not self.vector:
 			self.currentBody = pygame.transform.flip(self.currentBody, True, False)
 
@@ -54,64 +103,33 @@ class Player():
 			self.currentHead = pygame.transform.flip(self.currentHead, True, False)
 
 
-	def kneel(self):
-		self.kneeling = True
-		self.currentBody = self.kneelFrame
-		if not self.vector:
-			self.currentBody = pygame.transform.flip(self.currentBody, True, False)
-
-
-
-	def calculateJump(self, level):
-		if self.vector:
-			if self.xPos != self.xPosMax:
-				self.xPos += 10
-			elif level.xPos == level.xPosMax and self.xPos < level.xPosMax:
-				self.xPos += 10
+	def calculateJump(self):
+		if self.goingUp and self.yPos > 200:
+			self.yPos -= 15
+			self.movement.goUp()
 		else:
-			if self.xPos != self.xPosMin and self.xPos > 0:
-				self.xPos -= 10
-			elif level.xPos == 0 and self.xPos > 0:
-				self.xPos -= 10
-		# move level
-		if level.xPos > 0 and self.xPos <= self.xPosMin:
-			level.move(-10)
-		elif level.xPos < level.xPosMax and self.xPos >= self.xPosMax:
-			level.move(10)
-		self.yPos -= self.yAcc
-		self.yAcc -= 2
-		if self.yAcc > 0:
-			self.currentBody = self.jumpFrames[0] if self.vector else pygame.transform.flip(self.jumpFrames[0] , True, False)
-		else:
-			self.currentBody = self.jumpFrames[1]  if self.vector else pygame.transform.flip(self.jumpFrames[1], True, False)
-		if self.yPos >= self.yPosOrig:
-			self.yPos = self.yPosOrig
-			self.yAcc = 30
-			self.jumping = False
-			pygame.time.set_timer(self.parent.jumpEvent, 0)			# un-register the jump-event
-			self.currentBody = self.standFrame if self.vector else pygame.transform.flip(self.standFrame, True, False)
-
+			self.goingUp = False
+			if self.yPos < self.yPosLevel:		# if player is in the air 
+				self.movement.goDown()
+				self.yPos += 10			# gravity
+				if self.yPos > self.yPosLevel:
+					self.yPos = self.yPosLevel
 
 
 	def move(self, speed):
-		if not self.jumping:
-			self.kneeling = False
-			self.movement.verticalMove(speed > 0)
-			self.changeFrame()
-			if speed != 0:
-				self.xPos += speed
-				self.vector = True if speed > 0 else False
-
-
+		self.frameNo.inc()
+		self.kneeling = False
+		self.movement.verticalMove(speed > 0)
+		if speed != 0:
+			self.xPos += speed
+			self.vector = True if speed > 0 else False
 
 
 	def stop(self):
 		self.frameNo.current = 0
 		self.stationary = self.parent.ticks
-		self.kneeling = False
 		self.movement.stop()
 		self.idle = self.parent.ticks
-		self.currentBody = self.standFrame if self.vector else pygame.transform.flip(self.standFrame, True, False)
 
 
 	def getHeadCoord(self):
@@ -125,6 +143,9 @@ class Player():
 
 
 	def draw(self):
-		self.parent.display.blit(self.currentBody, (self.xPos, self.yPos) )
-		self.parent.display.blit(self.currentHead, self.getHeadCoord() )
+		if self.death:
+			self.showDeath(self.xPos, self.yPos)
+		else:
+			self.parent.display.blit(self.currentBody, (self.xPos, self.yPos) )
+			self.parent.display.blit(self.currentHead, self.getHeadCoord() )
 
