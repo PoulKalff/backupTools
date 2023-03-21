@@ -27,71 +27,23 @@
       "ghHosts known to system"
     ],
     [
-      "/etc/mysql/my.cnf",
-      "mySQL configuration file"
-    ],
-    [
       "/etc/nanorc",
       "Nano editor configuration"
-    ],
-    [
-      "/etc/postgresql/9.3/main/pg_hba.conf",
-      "postGreSQL configuration file"
     ],
     [
       "/etc/rc.local",
       "Locally started processes"
     ],
     [
-      "/etc/samba/smb.conf",
-      "Samba configuration file"
-    ],
-    [
       "/home/klf/.bashrc",
       "Bash configuration file"
     ],
     [
-      "/home/dockerVolume/bazarr/config/config.ini",
+      "/home/klf/.docker/config.json",
       "-"
     ],
     [
-      "/home/dockerVolume/jackett/config/Jackett/ServerConfig.json",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/radarr/config/config.xml",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/radarr/config/moveFilm.py",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/radarr/config/radarr.db",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/sonarr/config/config.xml",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/sonarr/config/sonarr.db",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/transmission/config/openvpn-credentials.txt",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/transmission/config/transmission-credentials.txt",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/tvheadend/config/config",
-      "-"
-    ],
-    [
-      "/home/dockerVolume/grafana/grafana.db",
+      "/etc/docker/daemon.json",
       "-"
     ]
   ],
