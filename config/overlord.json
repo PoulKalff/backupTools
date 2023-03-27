@@ -28,7 +28,7 @@
     ],
     [
       "/etc/hosts",
-      "ghHosts known to system"
+      "Hosts known to system"
     ],
     [
       "/etc/nanorc",
@@ -57,16 +57,12 @@
       "-"
     ],
     [
-      "hddtemp",
-      "-"
-    ],
-    [
       "mc",
       "-"
     ],
     [
       "nmap",
-      "-"
+      "-ddssdfq"
     ],
     [
       "npm",

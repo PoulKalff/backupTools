@@ -10,7 +10,7 @@ import poktools
 
 # --- Variables -----------------------------------------------------------------------------------
 
-version = "v0.081"   # fixed selectPath crash on window resize
+version = "v2.01"   # shorten text from containers if too long for screen
 locale.setlocale(locale.LC_ALL, '')
 
 # --- Functions -----------------------------------------------------------------------------------
@@ -164,14 +164,19 @@ class nceMenuListItem():
 class nceLabel():
 	""" Label object """
 
-	def __init__(self, x, y, textString, color):
+	def __init__(self, x, y, content, color):
 		self.x = x
 		self.y = y
 		self.type = 'nceLabel'
 		self.id = None
 		self.name = 'Unnamed_Label'
 		self.color = color		# not used, only for reference
-		self.content = [nceMenuListItem(textString, color, color)]
+		if type(content) == str:
+			self.content = [nceMenuListItem(content, color, color)]
+		elif type(content) == list:
+			self.content = []
+			for textString in content:
+				self.content.append( nceMenuListItem(textString, color, color) )
 		self.frame = False
 
 
@@ -355,8 +360,36 @@ class nceMenu():
 		return (self.id, _key)		# send key back, to handle in main program
 
 
+
+	def getHighlightedValue(self):
+		return self.content[self.pointer.current].text
+
+
+
+class nceRawTextContainer():
+    """ Menu object
+            content can be list of strings or list of lists of string and color"""
+
+    def __init__(self, x, y, content, color):
+        self.x = x
+        self.y = y
+        self.type = 'nceRawTextContainer'
+        self.id = None
+        self.name = 'Unnamed_RawTextContainer'
+        self.color = color
+        self.content = content
+        self.scrollContent = False
+        self.width = 0
+        for l in content:
+                if len(l) > self.width:
+                    self.width = len(l)
+        self.frame = False
+        self.id = None
+
+
+
 class NCEngine:
-	""" Presents the screen of a program 
+	""" Presents the screen of a program
 			default colours are
 				0 white
 				1 red
@@ -393,7 +426,7 @@ class NCEngine:
 		self._getSize()
 		self.parent = parent
 		self.status = 'Init'
-		self.exitKey = 113	# key to exit engine, default set to KEY_Q
+		self.exitKeys = [113, 81]	# key to exit engine, default set to KEY_Q
 		curses.noecho()
 		curses.curs_set(0)
 		# init colors
@@ -618,31 +651,38 @@ class NCEngine:
 
 	def drawObjects(self):
 		""" Draw all objects in drawStack """
+		height, width = self.screen.getmaxyx()
 		for key in self.drawStack:
 			o = self.objects[key]
-			if o.rtc:	# only horisontal center is supported currently, and only absolute values
-				hcenter = int((self.width - 1) / 2)
-				posX = hcenter + o.x
-				posY = o.y
-			else:
-				posX = int((o.x * self.width / 100) if type(o.x) == float else o.x)
-				posY = int((o.y * self.height / 100) - 1 if type(o.y) == float else o.y)
+			posX = int((o.x * self.width / 100) if type(o.x) == float else o.x)
+			posY = int((o.y * self.height / 100) - 1 if type(o.y) == float else o.y)
 			# frame
 			if o.frame:
 				for nr, item in enumerate(o.frame):
 					self.wts(posY + nr, posX + 1, item[0], item[1])
 			# text
-			for no in range(self.height - 5):						# count through lines on screen, -5 lines used for frame
-				if no <= len(o.content) - 1:				# if there is an item for this line
-					if o.type == 'nceMenu' and o.scrollContent:
-						item = o.content[no + self.heightFocus]
-					else:
-						item = o.content[no]
-					try:
-						self.wts(posY + no + 1, posX + 2, item.text[:o.width], item.acutalColor)
-					except:
-						self.exit('\n\n\nError occured in drawObjects, while drawing : \n\n\n      OBJECT= "' + 
-							str(o.content) + '"\n\n\n      ITEM= "' + str(item)) + '"'
+			if o.type == "nceRawTextContainer":
+				for no, txtLine in enumerate(o.content):
+					if no < height - 5:
+						if posX + len(txtLine) > width:
+							txtLine = txtLine[: width - posX - 5] + "..." 	# shorten text to fit screen
+						self.wts(posY + no, posX, txtLine, o.color)
+			else:
+				for no in range(self.height - 5):						# count through lines on screen, -5 lines used for frame
+					if no <= len(o.content) - 1:				# if there is an item for this line
+						if o.type == 'nceMenu' and o.scrollContent:
+							item = o.content[no + self.heightFocus]
+						else:
+							item = o.content[no]
+							fixedText = item.text[:o.width]	# do not write text wider than container
+							if posX + len(fixedText) > width:
+								fixedText = fixedText[: width - posX - 7] + "..." 	# shorten text to fit screen
+							item.text = fixedText
+						try:
+							self.wts(posY + no + 1, posX + 2, item.text, item.acutalColor)
+						except:
+							self.exit('\n\n\nError occured in drawObjects, while drawing : \n\n\n      OBJECT= "' +
+								str(o.content) + '"\n\n\n      ITEM= "' + str(item)) + '"'
 		return True
 
 
@@ -651,22 +691,16 @@ class NCEngine:
 		intersections = [[], []]
 		for l in self.lines:
 			if l.visible:
-				if l.direction == 'v':
-					if l.rtc:
-						position = l.coordinate + int((self.width - 1) / 2)
-					else:
-						position = int((l.coordinate * self.width / 100) if type(l.coordinate) == float else l.coordinate)
+				if l.direction:
+					position = int((l.coordinate * self.width / 100) if type(l.coordinate) == float else l.coordinate)
 					intersections[0].append(position)
 					for yPos in range(1, self.height - 2):
 						self.wts(yPos, position, '│', self._borderColor)
 					# endpoints
 					self.wts(0, position, '┬',self._borderColor)
 					self.wts(self.height - 2, position, '┴', self._borderColor)
-				elif l.direction == 'h':
-					if l.rtc:
-						position = l.coordinate + ((self.height - 1) / 2)
-					else:
-						position = int((l.coordinate * self.height / 100) - 1 if type(l.coordinate) == float else l.coordinate)
+				else:
+					position = int((l.coordinate * self.height / 100) - 1 if type(l.coordinate) == float else l.coordinate)
 					intersections[1].append(position)
 					self.wts(position, 1, '─' * (self.width - 2), self._borderColor)
 					# endpoints
@@ -680,7 +714,6 @@ class NCEngine:
 		if self.screenBorder:
 			self.verticalBoundaries.append(self.width)
 		self.verticalBoundaries.sort()
-
 
 
 	def drawBorder(self):
@@ -710,13 +743,13 @@ class NCEngine:
 				if curPos >= self.height - 6 and curPos != noLines - 1:
 					self.heightFocus += 1
 		# if keyPressed == 120:	# X, for DEV
-		# 	self.exit('Killed for debug:' + 
-		# 		'\n----------------------------------' + 
-		# 		'\n  Items:           ' + str(noLines) + 
-		# 		'\n  Screen height-5: ' + str(self.height - 5) + 
-		# 		'\n  Height Focus:    ' + str(self.heightFocus) + 
+		# 	self.exit('Killed for debug:' +
+		# 		'\n----------------------------------' +
+		# 		'\n  Items:           ' + str(noLines) +
+		# 		'\n  Screen height-5: ' + str(self.height - 5) +
+		# 		'\n  Height Focus:    ' + str(self.heightFocus) +
 		# 		'\n  Cursor Position: ' + str(curPos))
-		if keyPressed == self.exitKey:
+		if keyPressed in self.exitKeys:
 			self.terminate()
 		return keyPressed 		# return key for (possible) further action in calling program
 
@@ -760,6 +793,14 @@ class NCEngine:
 
 # --- Setter Functions ----------------------------------------------------------------------------
 
+
+	@property
+	def hCenter(self):
+		""" calculates and returns the horizontal center of the screen  """
+		height, width = self.screen.getmaxyx()
+		return int(width / 2)
+
+
 	@property
 	def borderColor(self):
 		return self._borderColor
@@ -786,42 +827,48 @@ class NCEngine:
 		counter = 1
 		while counter in self.objects.keys():
 			counter += 1
-		return counter		
+		return counter
 
 
-	def addGridLine(self, type, pos, rtc, visible=True):
-		obj = nceLine(type, pos)
-		obj.rtc = True if rtc else False
-		obj.color = 3
+	def addVerticalLine(self, pos):
+		obj = nceLine(True, pos)
 		self.lines.append(obj)
 		return obj
 
 
-	def addFrame(self, x, y, width, height, color, rtc):
+	def addHorizontalLine(self, pos):
+		obj = nceLine(False, pos)
+		self.lines.append(obj)
+		return obj
+
+
+	def addFrame(self, x, y, width, height, color):
 		obj = nceFrame(x, y, width, height, color)
-		obj.rtc = True if rtc else False
 		obj.width = width
 		obj.id = self.generateID()
 		self.objects[obj.id] = obj
 		return obj.id
 
 
-	def addLabel(self, x, y, content, color, rtc):
+	def addLabel(self, x, y, content, color):
 		obj = nceLabel(x, y, content, color)
-		obj.rtc = True if rtc else False
 		obj.frame = False
-		obj.width = len(content)
+		if type(content) == str:
+			obj.width = len(content)
+		elif type(content) == list:
+			obj.width = len(max(content, key=len))
 		obj.id = self.generateID()
 		self.objects[obj.id] = obj
+		self.drawStack.append(obj.id)
 		return obj.id
 
 
-	def addInputBox(self, message, color, ajax):
+
+	def addInputBox(self, message, color, ajax = False):
 		""" Always appears in the center """
 		self._getSize()
 		width = len(message) + 2
 		obj = nceInputBox(self.textEditor, self.hcenter - 1 - round(width / 2), 10, message, color, ajax)
-		obj.rtc = False
 		obj.frame = [	['╭' + ('─' * width) + '╮', color],
 						['│' + (' ' * width) + '│', color],
 						['├' + ('─' * width) + '┤', color],
@@ -833,6 +880,7 @@ class NCEngine:
 		obj.width = width
 		obj.id = self.generateID()
 		self.objects[obj.id] = obj
+		self.drawStack.append(obj.id)
 		return obj.id
 
 
@@ -842,7 +890,6 @@ class NCEngine:
 		if message == '': message = 'Please select YES or NO'
 		width = len(message) + 2
 		obj = nceDialogBox(self.hcenter - 1 - round(width / 2), 10, message, color)
-		obj.rtc = False
 		obj.frame = [	['╭' + ('─' * width) + '╮', color],
 						['│' + (' ' * width) + '│', color],
 						['├' + ('─' * width) + '┤', color],
@@ -861,17 +908,28 @@ class NCEngine:
 		obj.width = width
 		obj.id = self.generateID()
 		self.objects[obj.id] = obj
+		self.drawStack.append(obj.id)
 		return obj.id
 
 
-	def addMenu(self, x, y, content, color, frame, rtc):
+	def addMenu(self, x, y, content, color, frame):
 		obj = nceMenu(x, y, content, color)
-		obj.rtc = True if rtc else False
 		obj.frame = obj._createFrame(content, obj.width) if frame else False
 		obj.highlight(0)
 		obj.id = self.generateID()
 		self.objects[obj.id] = obj
+		self.drawStack.append(obj.id)
 		return obj.id
+
+
+	def addRawTextContainer(self, x, y, content, color, frame=False):
+		obj = nceRawTextContainer(x, y, content, color)
+		obj.frame = obj._createFrame(content, obj.width) if frame else False
+		obj.id = self.generateID()
+		self.objects[obj.id] = obj
+		self.drawStack.append(obj.id)
+		return obj.id
+
 
 
 # --- Main ---------------------------------------------------------------------------------------
@@ -883,7 +941,18 @@ if sys.version_info < (3, 0):
 
 
 # --- TODO ---------------------------------------------------------------------------------------
+# - BUG: color 0 is not white when used in other programs?
+
 # - Position objects relative to RIGHT SIDE / BOTTOM / VERTICAL CENTER
-#		- Menu, set alignment when changing width (not automatically central)
+# 	- function or variable to calculate middle (and other positions?)
+#	- Menu, set alignment when changing width (not automatically central)
+# - horz/vert lines to have startingpoint inside screen
+# - at least some minnimal docuentation, ffs!
+
+
+
+
+
+
 
 

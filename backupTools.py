@@ -12,7 +12,7 @@ import filecmp
 import poktools
 import subprocess
 from filecmp import dircmp
-from ncengine import NCEngine, nceMenuListItem, SelectPath
+from ncengineV2 import NCEngine, nceMenuListItem, SelectPath
 
 locale.setlocale(locale.LC_ALL, '')
 code = locale.getpreferredencoding()
@@ -86,25 +86,25 @@ class BackupTools:
 		""" Loads data and starts up the interface of both viewmodes"""
 		loadedData = self.readFromFile()
 		# opret objekter
-		self.view.addGridLine('h', 2, False)
-		self.view.addGridLine('v', 9, True)
-		self.view.addGridLine('v', -9, True)
-		self.view.addLabel(0, 0, 'Configuration file and path:', 0, False)
-		self.view.addLabel(0, 0, 'Apt Packages:', 0, False)
-		self.view.addLabel(-14 - len(self.hostname), 0, '[' + self.hostname.upper() + ']', 4, True)
-		self.view.addLabel(-5, 0, 'Status:', 0, True)
-		self.view.addLabel(9, 0, 'Description:', 0, True)
+		self.view.addHorizontalLine(2)
+		self.view.addVerticalLine(self.view.hCenter - 9)
+		self.view.addVerticalLine(self.view.hCenter + 9)
+		self.view.addLabel(0, 0, 'Configuration file and path:', 0)
+		self.view.addLabel(0, 0, 'Apt Packages:', 0)
+		self.view.addLabel(self.view.hCenter - 14 - len(self.hostname), 0, '[' + self.hostname.upper() + ']', 4)
+		self.view.addLabel(self.view.hCenter - 5, 0, 'Status:', 0)
+		self.view.addLabel(self.view.hCenter + 9, 0, 'Description:', 0)
 		# generate 2 x 3 main menus
-		id_A2 = self.view.addMenu(-9, 2, [statusArray[item[2]] for item in loadedData[0]], 3, False, True)
-		id_B2 = self.view.addMenu(-9, 2, [statusArray[item[2]] for item in loadedData[1]], 3, False, True)
+		id_A2 = self.view.addMenu(self.view.hCenter - 9, 2, [statusArray[item[2]] for item in loadedData[0]], 3, False)
+		id_B2 = self.view.addMenu(self.view.hCenter - 9, 2, [statusArray[item[2]] for item in loadedData[1]], 3, False)
 		self.view.objects[id_A2].setWidth(15)
 		self.view.objects[id_B2].setWidth(15)
 		self.view.objects[id_A2].scrollContent = True
 		self.view.objects[id_B2].scrollContent = True
-		id_A3 = self.view.addMenu(9, 2, [item[1] for item in loadedData[0]], 3, False, True)
-		id_B3 = self.view.addMenu(9, 2, [item[1] for item in loadedData[1]], 3, False, True)
-		id_A1 = self.view.addMenu(0, 2, [item[0] for item in loadedData[0]], 3, False, False)
-		id_B1 = self.view.addMenu(0, 2, [item[0] for item in loadedData[1]], 3, False, False)
+		id_A3 = self.view.addMenu(self.view.hCenter + 9, 2, [item[1] for item in loadedData[0]], 3, False)
+		id_B3 = self.view.addMenu(self.view.hCenter + 9, 2, [item[1] for item in loadedData[1]], 3, False)
+		id_A1 = self.view.addMenu(0, 2, [item[0] for item in loadedData[0]], 3, False)
+		id_B1 = self.view.addMenu(0, 2, [item[0] for item in loadedData[1]], 3, False)
 		self.view.objects[id_A1].actions.append(self.showSelectionMenu)
 		self.view.objects[id_B1].actions.append(self.showSelectionMenu)
 		self.view.objects[id_A3].scrollContent = True
@@ -129,13 +129,13 @@ class BackupTools:
 		self.view.objects[id_B2].name = 'apt package status'
 		self.view.objects[id_B3].name = 'apt package description'
 		# create central menus
-		id_centralMenu1 = self.view.addMenu(-18, 20, [['Add New Item', 3], ['Switch View', 3]], 3, True, True)
+		id_centralMenu1 = self.view.addMenu(self.view.hCenter -18, 20, [['Add New Item', 3], ['Switch View', 3]], 3, True)
 		obj = self.view.objects[id_centralMenu1]
 		obj.name = 'config files central menu'
 		obj.setWidth(33)
 		obj.actions.append(self.addItem)
 		obj.actions.append(self.switchView)
-		id_centralMenu2 = self.view.addMenu(-18, 20, [['Add New Package', 3], ['Switch View', 3]], 3, True, True)
+		id_centralMenu2 = self.view.addMenu(self.view.hCenter - 18, 20, [['Add New Package', 3], ['Switch View', 3]], 3, True)
 		obj = self.view.objects[id_centralMenu2]
 		obj.name = 'apt packages central menu'
 		obj.setWidth(33)
@@ -143,7 +143,7 @@ class BackupTools:
 #		obj.actions.append(self.addInstalledPackages)
 		obj.actions.append(self.switchView)
 		# create action menus.... both are set at position 0,0, overwritten when opened
-		id_actionMenuConfig = self.view.addMenu(0,0, [[item, 3, 3] for item in actionMenuArray[0]], 3, True, False)
+		id_actionMenuConfig = self.view.addMenu(0,0, [[item, 3, 3] for item in actionMenuArray[0]], 3, True)
 		obj = self.view.objects[id_actionMenuConfig]
 		obj.setFrameColor(2)
 		obj.setItemColor(6)
@@ -152,7 +152,7 @@ class BackupTools:
 		obj.actions.append(self.compareItems)
 		obj.actions.append(self.editDescription)
 		obj.actions.append(self.removeMenuItem)
-		id_actionMenuApt = self.view.addMenu(0, 0, [[item, 3, 3] for item in actionMenuArray[1]], 3, True, False)
+		id_actionMenuApt = self.view.addMenu(0, 0, [[item, 3, 3] for item in actionMenuArray[1]], 3, True)
 		obj = self.view.objects[id_actionMenuApt]
 		obj.setFrameColor(2)
 		obj.setItemColor(6)
@@ -160,10 +160,10 @@ class BackupTools:
 		obj.actions.append(self.editDescription)
 		obj.actions.append(self.removeMenuItem)
 		# comparing labels/menus
-		self.view.addLabel(0, 0, 'Original', 3, False)
-		self.view.addLabel(0, 0, 'Backed up', 3, True)
-		self.view.addMenu(0, 2, [' ' for item in range(self.view.height - 6)], 12, True, False)
-		self.view.addMenu(1, 2, [' ' for item in range(self.view.height - 6)], 12, True, True)
+		self.view.addLabel(0, 0, 'Original', 3)
+		self.view.addLabel(self.view.hCenter, 0, 'Backed up', 3)
+		self.view.addMenu(0, 2, [' ' for item in range(self.view.height - 6)], 12, True)
+		self.view.addMenu(self.view.hCenter + 1, 2, [' ' for item in range(self.view.height - 6)], 12, True)
 		self.view.addDialogBox('Are you sure that you want to overwrite the original', self.view.borderColor)
 		self.view.addInputBox('Write the name of the new package', self.view.borderColor, True)
 		self.view.status = 'Select an item'
@@ -281,8 +281,8 @@ class BackupTools:
 				self.showCentralMenu()
 			elif activeObject.id == 12 or activeObject.id == 13:
 				self.view.drawStack.pop()
-		elif keyCode == 100:									# Key D, (DEBUG)
-			self.view.exit(" DUMPING VARIABLE >>>>>  " + str(  self.view.objects ))
+		elif keyCode == 100:								# Key D, (DEBUG)
+			self.view.exit(" DUMPING VARIABLE >>>>>  " + str(  self.view.objects[11].content[3].text ))
 		if keyCode == 10:			# Execute (ENTER)
 			if menuID == 10 or menuID == 11:	# primary menus
 				activeObject.actions[0]()
@@ -378,24 +378,24 @@ class BackupTools:
 			bigFrameId = self.view.addFrame(xCord - 1, 10, len(lines[0]), len(lines), self.view.borderColor, False)
 			self.view.drawStack.append(bigFrameId)
 			# label to hide shrinking bigFrame
-			labelUnderBigFrameId = self.view.addLabel(xCord - 2, 11 + len(lines), (len(lines[0]) + 2) * ' ', 8, False)
+			labelUnderBigFrameId = self.view.addLabel(xCord - 2, 11 + len(lines), (len(lines[0]) + 2) * ' ', 8)
 			self.view.drawStack.append(labelUnderBigFrameId)
 			frameId = self.view.addFrame(xCord - 1, 8, 58, 1, self.view.borderColor, False)
 			self.view.objects[frameId].frame[2][0] = self.view.objects[frameId].frame[2][0].replace('└', '├')
 			self.view.objects[frameId].frame[2][0] = self.view.objects[frameId].frame[2][0].replace('╯', '┴')
 			self.view.drawStack.append(frameId)
-			headerId = self.view.addLabel(xCord - 1, 8, ' Packages manually installed on system (and not watched): ', 0, False)
+			headerId = self.view.addLabel(xCord - 1, 8, ' Packages manually installed on system (and not watched): ', 0)
 			self.view.drawStack.append(headerId)
 			for no, l in enumerate(lines):
 				color = 5 if (no % 2) == 0 else 6
-				labelId = self.view.addLabel(xCord, 10 + no, l.rstrip(), color, False)
+				labelId = self.view.addLabel(xCord, 10 + no, l.rstrip(), color)
 				self.view.drawStack.append(labelId)
 				noOfLines = no
 			self.view.drawStack.append(21)
 			obj = self.view.objects[21]
 			obj.y = noOfLines + 14
 			obj.content[0].text = ' Package to add (empty to end) '
-			self.ajaxMenuId = self.view.addMenu(20, noOfLines + 14, self.ajaxLists[1][:10], 3, True, True)
+			self.ajaxMenuId = self.view.addMenu(self.view.hCenter + 20, noOfLines + 14, self.ajaxLists[1][:10], 3, True)
 			self.view.drawStack.append(self.ajaxMenuId)
 			self.view.objects[self.ajaxMenuId].setWidth(2, True)
 			self.view.objects[self.ajaxMenuId].highlight()
