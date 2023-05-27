@@ -6,11 +6,11 @@ import re
 import sys
 import curses
 import locale
-import poktools
+import toolbox
 
 # --- Variables -----------------------------------------------------------------------------------
 
-version = "v2.01"   # shorten text from containers if too long for screen
+version = "v2.03"   # add gethighlightedNo
 locale.setlocale(locale.LC_ALL, '')
 
 # --- Functions -----------------------------------------------------------------------------------
@@ -235,7 +235,7 @@ class nceDialogBox():
 		self.content = []
 		self.message = message
 		self.width = None
-		self.pointer = poktools.FlipSwitch(0)
+		self.pointer = toolbox.FlipSwitch(0)
 
 
 	def updateKeys(self, _key):
@@ -283,7 +283,7 @@ class nceMenu():
 					self.width = len(item)
 		self.frame = False
 		self.id = None
-		self.pointer = poktools.RangeIterator(len(self.content) - 1, False)
+		self.pointer = toolbox.RangeIterator(len(self.content) - 1, False)
 		self.actions = []		# actions bound to menu content
 		self.linkedObjects = []		# objects that have identical content and are highlighted from this menu
 
@@ -306,6 +306,12 @@ class nceMenu():
 				obj.acutalColor = obj.constantColor
 			if highligtedItem != None:
 				self.content[highligtedItem].acutalColor =  16
+
+
+	def reset(self):
+		""" set the menu highlighted item to first item """
+		self.pointer.current = 0
+		self.highlight(0)
 
 
 	def setWidth(self, _width, add=False):
@@ -360,9 +366,13 @@ class nceMenu():
 		return (self.id, _key)		# send key back, to handle in main program
 
 
-
 	def getHighlightedValue(self):
 		return self.content[self.pointer.current].text
+
+
+	def getHighlightedNo(self):
+		return self.pointer.current
+
 
 
 
@@ -413,6 +423,7 @@ class NCEngine:
 	lines = []
 	objects = {}	# objects can only be added by setter-functions, which will generate and return ID, by which object can be referenced
 	drawStack = []	# list of order in which to draw objects
+	keyStore = {}
 	ajaxFiltered = [None, None]		# filtered lists [all, filtered] used by textEditor, none by default
 	running = True
 	screenBorder = False
@@ -472,7 +483,7 @@ class NCEngine:
 		self._getSize()
 		xPos = int((x * self.width / 100) + 2 if type(x) == float else x)
 		yPos = int((y * self.height / 100) - 1 if type(y) == float else y)
-		pointer = poktools.RangeIterator(len(eString) - 1, False)
+		pointer = toolbox.RangeIterator(len(eString) - 1, False)
 		keyPressed = ''
 		teRunning = True
 		self.wts(self.height - 1, 0, 'UP/DOWN cycles digit, ENTER accepts changes', 6)    # Overwrite Status
@@ -544,7 +555,7 @@ class NCEngine:
 	def textEditor(self, x, y, eString, color, updateAjax = False):
 		""" Edits a line of text """
 		eString += ' '
-		pointer = poktools.RangeIterator(len(eString) - 1, False)
+		pointer = toolbox.RangeIterator(len(eString) - 1, False)
 		keyPressed = ''
 		stringSliced = [[], [], []]
 		self._getSize()

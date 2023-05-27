@@ -9,10 +9,10 @@ import locale
 import socket
 import shutil
 import filecmp
-import poktools
+import toolbox
 import subprocess
 from filecmp import dircmp
-from ncengineV2 import NCEngine, nceMenuListItem, SelectPath
+from ncengine import NCEngine, nceMenuListItem, SelectPath
 
 locale.setlocale(locale.LC_ALL, '')
 code = locale.getpreferredencoding()
@@ -298,12 +298,12 @@ class BackupTools:
 			self.view.drawStack.pop()
 			return 0
 		package = menuItem.name
-		if poktools.checkPackageInstalled(package):
+		if toolbox.checkPackageInstalled(package):
 			self.view.updateStatus('"' + package + '" is already installed, status seems to be wrong')
 		else:
 			height, width = self.view.screen.getmaxyx()
 			self.view.updateStatus('Installing package, please be patient...')
-			poktools.installPackage(package)
+			toolbox.installPackage(package)
 			self.view.objects[7].content[index].text = '   Installed   ' 					# update status
 			self.view.objects[7].content[index].constantColor = statusArray[9][1]			# update status colour
 			self.view.drawStack.pop()
@@ -338,14 +338,14 @@ class BackupTools:
 		commandGunzip = "sudo gunzip history.log*.gz -f"
 		installedPackages = [ item.text for item in self.view.objects[11].content ]
 		commandGetAvailable = "grep ^Package /var/lib/apt/lists/* | awk '{print $2}' | sort -u"
-		reply = poktools.runExternal(commandGetAvailable)
+		reply = toolbox.runExternal(commandGetAvailable)
 		packages = reply.split('\n')
 		while packages[0].startswith('grep'):	# remove stderr output
 			packages.pop(0)
 		self.ajaxLists[0] = packages
 		self.ajaxLists[1] = packages[:10]
 		commandGetInstalled = "cat /var/log/apt/history.log* | grep -v .gz | grep 'Commandline: apt install' | sed 's/Commandline: apt install //g'"
-		reply = poktools.runExternal(commandGetInstalled)
+		reply = toolbox.runExternal(commandGetInstalled)
 		packages = reply.split('\n')
 		packages2 = []
 		for p in packages:
@@ -406,10 +406,10 @@ class BackupTools:
 				running = False
 			elif newPackage in [item.text for item in self.view.objects[11].content]:
 				self.view.status = 'Apt-package "' + newPackage + '" is already in the list'
-			elif poktools.checkPackageExists(newPackage):
+			elif toolbox.checkPackageExists(newPackage):
 				if newPackage in packages3:
 					packages3.remove(newPackage)
-				if poktools.checkPackageInstalled(newPackage):
+				if toolbox.checkPackageInstalled(newPackage):
 					self.view.objects[7].content.append(nceMenuListItem('   Installed   ', 2, 2))
 				else:
 					self.view.objects[7].content.append(nceMenuListItem('    Missing    ', 0, 0))
@@ -733,7 +733,7 @@ class BackupTools:
 			else:
 				pair.append(3)               # source != dest
 		for pair in data[1]:
-			pair.append(int(poktools.checkPackageInstalled(pair[0]) + 8))
+			pair.append(int(toolbox.checkPackageInstalled(pair[0]) + 8))
 		return data
 
 
