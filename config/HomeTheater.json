@@ -1,0 +1,64 @@
+{
+  "host": "HomeTheater",
+  "backupPath": "/mnt/3tb_hdd/backup/HomeTheater.backup/",
+  "configFiles": [
+    [
+      "/etc/crontab",
+      "Cron jobs started"
+    ],
+    [
+      "/etc/fstab",
+      "List of mounts"
+    ],
+    [
+      "/etc/hosts",
+      "Hosts known to system"
+    ],
+    [
+      "/etc/nanorc",
+      "Nano editor configuration"
+    ],
+    [
+      "/home/klf/.bashrc",
+      "Bash configuration file"
+    ],
+    [
+      "/usr/local/share/shinobi.png",
+      "-"
+    ],
+    [
+      "/home/klf/.config/user-dirs.dirs",
+      "-"
+    ]
+  ],
+  "aptPackages": [
+    [
+      "bluemon",
+      "-"
+    ],
+    [
+      "docker-ce",
+      "-"
+    ],
+    [
+      "mc",
+      "-"
+    ],
+    [
+      "nmap",
+      "-ddssdfq"
+    ],
+    [
+      "npm",
+      "-"
+    ],
+    [
+      "openssh-server",
+      "Third Description"
+    ],
+    [
+      "python3-nmap",
+      "-"
+    ]
+  ]
+}

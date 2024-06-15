@@ -1,6 +1,6 @@
 {
   "host": "wotan",
-  "backupPath": "/mnt/overlord/3tb_hdd/backup/wotan.backup",
+  "backupPath": "/mnt/3tb_hdd/backup/wotan.backup",
   "configFiles": [
     [
       "/etc/fstab",
