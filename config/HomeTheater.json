@@ -23,11 +23,15 @@
       "Bash configuration file"
     ],
     [
+      "/home/klf/.config/user-dirs.dirs",
+      "-"
+    ],
+    [
       "/usr/local/share/shinobi.png",
       "-"
     ],
     [
-      "/home/klf/.config/user-dirs.dirs",
+      "/etc/conky/conky.conf",
       "-"
     ]
   ],
